@@ -1,5 +1,5 @@
 {
-  description = "A basic gomod2nix flake";
+  description = "simple cli to manage dev container workflows outside of vscode";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";

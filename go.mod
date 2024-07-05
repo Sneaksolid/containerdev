@@ -1,3 +1,3 @@
-module example.com/gomod2nix-template
+module github.com/Sneaksolid/containerdev
 
-go 1.17
+go 1.22
