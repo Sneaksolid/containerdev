@@ -15,6 +15,6 @@
 buildGoApplication {
   pname = "containerdev";
   version = "0.1";
-  src = ./cmd/containerdev;
+  src = ./.;
   modules = ./gomod2nix.toml;
 }
