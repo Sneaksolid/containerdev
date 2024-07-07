@@ -15,8 +15,44 @@ var (
 )
 
 type ContainerConfig struct {
-	Name  string `yaml:"name" validate:"required"`
-	Image string `yaml:"image" validate:"required"`
+	Name         string   `yaml:"name" validate:"required"`
+	Image        string   `yaml:"image" validate:"required"`
+	Stdin        bool     `yaml:"stdin"`
+	AsUser       bool     `yaml:"as_user"`
+	MountWorkdir bool     `yaml:"mount_workdir"`
+	Mounts       []string `yaml:"mounts"`
+	Cmd          []string `yaml:"cmd"`
+}
+
+func (c *ContainerConfig) getRunOptions() (*RunOptions, error) {
+	opts := RunOptions{
+		Name:   c.Name,
+		Image:  c.Image,
+		Stdin:  c.Stdin,
+		AsUser: c.AsUser,
+
+		Volumes: make(map[string]string),
+	}
+
+	if c.MountWorkdir {
+		pwd, err := os.Getwd()
+		if err != nil {
+			return nil, fmt.Errorf("error getting current directory: %w", err)
+		}
+
+		opts.Volumes[pwd] = pwd
+		opts.WorkDir = pwd
+	}
+
+	for _, mount := range c.Mounts {
+		opts.Volumes[mount] = mount
+	}
+
+	if len(c.Cmd) > 0 {
+		opts.Cmd = c.Cmd
+	}
+
+	return &opts, nil
 }
 
 type Config struct {
@@ -49,11 +85,12 @@ func main() {
 			return fmt.Errorf("container not found in config")
 		}
 
-		err = Run(ctx, RunOptions{
-			Image:      containerCfg.Image,
-			EntryPoint: "sh",
-			Cmd:        []string{""},
-		})
+		runOpts, err := containerCfg.getRunOptions()
+		if err != nil {
+			return fmt.Errorf("error getting run options: %w", err)
+		}
+
+		err = Run(ctx, *runOpts)
 		if err != nil {
 			return fmt.Errorf("error running container: %w", err)
 		}

@@ -9,9 +9,16 @@ import (
 )
 
 type RunOptions struct {
-	Image      string
+	Name   string
+	Image  string
+	Stdin  bool
+	Tty    bool
+	AsUser bool
+
+	Volumes map[string]string
+	WorkDir string
+
 	EntryPoint string
-	AsUser     bool
 	Cmd        []string
 }
 
@@ -31,12 +38,31 @@ func (o *RunOptions) args() []string {
 			"-u", fmt.Sprintf("%d:%d", uid, gid))
 	}
 
+	if o.Name != "" {
+		opts = append(opts, "--name", o.Name)
+	}
+
+	if o.Stdin {
+		opts = append(opts, "-i")
+	}
+
+	if o.Tty {
+		opts = append(opts, "-t")
+	}
+
 	if o.EntryPoint != "" {
 		opts = append(opts, "--entrypoint", o.EntryPoint)
 	}
 
-	opts = append(opts, o.Image)
+	for src, dst := range o.Volumes {
+		opts = append(opts, "-v", fmt.Sprintf("%s:%s", src, dst))
+	}
 
+	if o.WorkDir != "" {
+		opts = append(opts, "-w", o.WorkDir)
+	}
+
+	opts = append(opts, o.Image)
 	if len(o.Cmd) > 0 {
 		opts = append(opts, o.Cmd...)
 	}
